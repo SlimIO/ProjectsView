@@ -2,6 +2,7 @@ document.addEventListener("DOMContentLoaded", async() => {
     // HTML Elements
     const container = document.getElementById("network");
     const template = document.getElementById("project");
+    const search = document.getElementById("search-bar");
 
     // CONSTANTS (for nodes colors)
     const C_EXT = "#673AB7";
@@ -17,6 +18,9 @@ document.addEventListener("DOMContentLoaded", async() => {
     let activeNode = null;
     let activeNodeId = null;
     let id = 5000;
+
+    // Initialize search bar
+    search.addEventListener("keypress", searchOnItems);
 
     // Fetch data
     const projects = await request("/data");
@@ -89,6 +93,18 @@ document.addEventListener("DOMContentLoaded", async() => {
     const network = new vis.Network(container, { nodes: nodesDataset, edges: edgesDataset }, options);
     network.on("click", neighbourhoodHighlight);
     network.on("click", updateProjectDesc);
+
+    function searchOnItems({ key: code, target: element }) {
+        if (code !== "Enter") return;
+        const regex = element.value.toLowerCase();
+
+        for (const [key, value] of idToName) {
+            if (value.toLowerCase().match(regex)) {
+                network.focus(key, { animation: true });
+                break;
+            }
+        }
+    }
 
     async function updateProjectDesc(params) {
         const menu = document.getElementById("menu");
@@ -184,7 +200,11 @@ document.addEventListener("DOMContentLoaded", async() => {
             menu.appendChild(activeNode);
         }
         else if (activeNode !== null) {
-            menu.innerHTML = "<p>Select a project</p>";
+            menu.innerHTML = "<p>Select a project</p><input id=\"search-bar\" type=\"text\" placeholder=\"Regex to search\">";
+
+            const search = document.getElementById("search-bar");
+            search.addEventListener("keypress", searchOnItems);
+
             activeNode = null;
             if (activeNodeId !== null) {
                 for (const id of activeNodeId) {
